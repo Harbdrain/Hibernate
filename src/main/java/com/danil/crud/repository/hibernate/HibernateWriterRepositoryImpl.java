@@ -52,7 +52,8 @@ public class HibernateWriterRepositoryImpl implements WriterRepository {
             postGraph.addSubgraph("labels").addAttributeNodes("name");
             postGraph.addSubgraph("labels").addAttributeNodes("status");
 
-            writers = session.createSelectionQuery("SELECT w FROM Writer w LEFT JOIN FETCH w.posts", Writer.class).setHint("jakarta.persistence.fetchgraph", postGraph).list();
+            writers = session.createSelectionQuery("SELECT w FROM Writer w LEFT JOIN FETCH w.posts", Writer.class)
+                    .setHint("jakarta.persistence.fetchgraph", postGraph).list();
 
             session.flush();
             transaction.commit();
@@ -85,8 +86,10 @@ public class HibernateWriterRepositoryImpl implements WriterRepository {
             postGraph.addSubgraph("labels").addAttributeNodes("status");
 
             writer = session
-                    .createSelectionQuery("SELECT w FROM Writer w LEFT JOIN FETCH w.posts WHERE w.id = :id", Writer.class)
-                    .setParameter("id", id).setHint("jakarta.persistence.fetchgraph", postGraph).getSingleResultOrNull();
+                    .createSelectionQuery("SELECT w FROM Writer w LEFT JOIN FETCH w.posts WHERE w.id = :id",
+                            Writer.class)
+                    .setParameter("id", id).setHint("jakarta.persistence.fetchgraph", postGraph)
+                    .getSingleResultOrNull();
 
             session.flush();
             transaction.commit();
@@ -132,6 +135,20 @@ public class HibernateWriterRepositoryImpl implements WriterRepository {
         Transaction transaction = null;
         try {
             transaction = session.beginTransaction();
+
+            EntityGraph<Post> postGraph = session.createEntityGraph(Post.class);
+            postGraph.addAttributeNodes("content");
+            postGraph.addAttributeNodes("created");
+            postGraph.addAttributeNodes("updated");
+            postGraph.addAttributeNodes("status");
+            postGraph.addSubgraph("labels").addAttributeNodes("name");
+            postGraph.addSubgraph("labels").addAttributeNodes("status");
+            session
+                    .createSelectionQuery("SELECT w FROM Writer w LEFT JOIN FETCH w.posts WHERE w.id = :id",
+                            Writer.class)
+                    .setParameter("id", writer.getId()).setHint("jakarta.persistence.fetchgraph", postGraph)
+                    .getSingleResultOrNull();
+
             session.merge(writer);
             session.flush();
             transaction.commit();
